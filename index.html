@@ -46,7 +46,7 @@ Aunt Maria	Garden table"></textarea>
 </div>
 <div id="out" style="display:none">
 <div id="sign"><h2 id="stitle"></h2><p>Find your seat: scan me 📷</p><div id="qr"></div><p class="mut" style="color:#6b6370">Point your phone camera here, then type your name</p></div>
-<div class="bar" style="justify-content:center"><button onclick="window.print()">🖨 Print the sign</button><button class="sec" id="open" type="button">Test it like a guest</button><button class="sec" id="copy" type="button">Copy the link</button></div>
+<div class="bar" style="justify-content:center"><button onclick="window.print()">🖨 Print the sign</button><button class="sec" id="open" type="button">Test it like a guest</button><button class="sec" id="copy" type="button">Copy the link</button><button class="sec" id="az" type="button">🖨 A–Z list for a board</button></div>
 <p class="mut" id="size"></p>
 </div>
 <details class="card"><summary><b>Where is my guest list stored?</b></summary>
@@ -121,7 +121,25 @@ function make() {
     `Prints well at 10 cm (4 in) or more.`;
   $("#open").onclick = () => window.open(url, "_blank", "noopener");
   $("#copy").onclick = () => navigator.clipboard.writeText(url).then(() => { $("#copy").textContent = "✓ Copied"; });
+  $("#az").onclick = () => printList(title, p.rows);
   $("#out").scrollIntoView({ behavior: "smooth" });
+}
+
+// A printable alphabetical list (by last name) with table numbers: for an escort board at the entrance.
+function printList(title, rows) {
+  const last = n => { const w = n.trim().split(/\s+/); return fold(w[w.length - 1] + " " + n); };
+  const sorted = [...rows].sort((a, b) => last(a[0]).localeCompare(last(b[0])));
+  const cols = sorted.length > 60 ? 3 : sorted.length > 25 ? 2 : 1;
+  const w = window.open("", "_blank");
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>${esc(title)} · seating list</title>
+<style>body{font:16px/1.5 Georgia,serif;color:#2b2530;margin:30px}h1{text-align:center;font-weight:400;font-size:34px;margin:0 0 4px}
+p{text-align:center;margin:0 0 24px;color:#6b6370}ul{columns:${cols};column-gap:40px;list-style:none;padding:0;margin:0 auto;max-width:${cols * 420}px}
+li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted #cbbfc6;padding:3px 0;break-inside:avoid}
+b{font-weight:700;white-space:nowrap}@media print{button{display:none}}</style>
+<h1>${esc(title)}</h1><p>Find your name · your table</p><ul>${sorted.map(([n, t]) =>
+    `<li><span>${esc(n)}</span><b>${/^\d+$/.test(t) ? "Table " + esc(t) : esc(t)}</b></li>`).join("")}</ul>
+<p style="margin-top:24px"><button onclick="print()">🖨 Print</button></p>`);
+  w.document.close();
 }
 
 function finder(data) {
