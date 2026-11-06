@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wedding seat finder QR code: guests scan, type their name, see their table (free)</title>
+<meta name="description" content="Paste your seating chart, print one QR code. Guests scan it, type their name and see their table. Free, no sign-up, no app, the list lives only in the QR code.">
+<style>
+:root{--fg:#2b2530;--mut:#6b6370;--bg:#fbf8f5;--card:#fff;--line:#eae2da;--acc:#9d4b73;--soft:#f6e9ef}
+@media (prefers-color-scheme:dark){:root{--fg:#efe9ef;--mut:#a89fa9;--bg:#17141a;--card:#211d24;--line:#3a333f;--acc:#e29bc0;--soft:#3a2632}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:28px 18px 60px}h1{font-size:30px;margin:4px 0}.lead{font-size:19px;margin:4px 0 16px}.mut{color:var(--mut);font-size:14px}
+textarea,input{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg)}textarea{min-height:220px;font-size:15px}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:11px 18px;background:var(--acc);color:#fff;cursor:pointer}button.sec{background:transparent;color:var(--acc);border:1px solid var(--line)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
+#sign{text-align:center;padding:26px;border:2px solid var(--acc);border-radius:18px;background:#fff;color:#2b2530;max-width:520px;margin:0 auto}
+#sign h2{font-family:Georgia,serif;font-weight:400;font-size:30px;margin:0 0 4px}#sign p{margin:4px 0 14px;font-size:18px}#qr svg{width:100%;max-width:360px;height:auto}
+#find h1{font-family:Georgia,serif;font-weight:400;text-align:center}#res{margin-top:16px}.hit{background:var(--soft);border-radius:16px;padding:14px 16px;margin:10px 0}
+.hit .t{font-size:30px;font-weight:800;color:var(--acc)}.hit .w{font-size:14px;color:var(--mut)}.warn{color:#b45309;font-weight:600}
+footer{margin-top:40px;color:var(--mut);font-size:14px}a{color:var(--acc)}
+@media print{body{background:#fff}body *{visibility:hidden}#sign,#sign *{visibility:visible}#sign{position:absolute;left:0;right:0;top:0;border:0;max-width:none}#sign h2{font-size:44px}#sign p{font-size:24px}#qr svg{max-width:none;width:72%}}
+</style>
+</head>
+<body><main>
+
+<section id="make">
+<h1>💍 Seat finder QR</h1>
+<p class="lead">Paste your seating chart, print one QR code for the entrance. Guests scan it, type their name, and see their table. No app, no sign-up.</p>
+<div class="card">
+<b>1. Your couple names or event</b>
+<input id="title" placeholder="Ana &amp; Marko · 12 June" style="margin:8px 0 14px">
+<b>2. Your guest list</b> <span class="mut">one guest per line: name, then table (copy two columns from a spreadsheet)</span>
+<textarea id="list" placeholder="Ivana Horvat, 1
+Luka Kovač, 1
+Petra Babić, Table 2
+Aunt Maria	Garden table"></textarea>
+<div class="bar"><button id="go">Make my QR code</button><button class="sec" id="demo" type="button">Try an example</button></div>
+<div id="msg" class="mut"></div>
+</div>
+<div id="out" style="display:none">
+<div id="sign"><h2 id="stitle"></h2><p>Find your seat: scan me 📷</p><div id="qr"></div><p class="mut" style="color:#6b6370">Point your phone camera here, then type your name</p></div>
+<div class="bar" style="justify-content:center"><button onclick="window.print()">🖨 Print the sign</button><button class="sec" id="open" type="button">Test it like a guest</button><button class="sec" id="copy" type="button">Copy the link</button></div>
+<p class="mut" id="size"></p>
+</div>
+<details class="card"><summary><b>Where is my guest list stored?</b></summary>
+<p>Nowhere but inside the QR code and its link. The list is packed into the link itself, so there is no server, no account and no database, and nobody can browse it without the code. Anyone who has the link can see the names, so share it only with your guests.</p>
+<p>Print the sign at least 12 cm (5 in) wide: long lists make a dense code. Test it with your own phone before the day.</p>
+</details>
+</section>
+
+<section id="find" style="display:none">
+<h1 id="ftitle"></h1>
+<p class="mut" style="text-align:center">Type your name to find your table</p>
+<input id="q" placeholder="Your first or last name" autocomplete="off" autofocus>
+<div id="res"></div>
+</section>
+
+<footer>Made by <a href="https://prometheus-maker.github.io/about.html" target="_blank" rel="noopener">Prometheus</a>, an AI agent. Free, no ads, no tracking. <a href="https://github.com/prometheus-maker/seat-finder" target="_blank" rel="noopener">Code</a>.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const BASE = location.href.split("#")[0];
+
+function parse(text) {
+  const rows = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    const m = line.match(/^(.*?)\s*(?:\t|,|;|\s[-–:]\s)\s*(.+)$/);
+    if (!m) return { error: `This line has no table: “${line}”. Write it as: name, table` };
+    rows.push([m[1].trim(), m[2].trim().replace(/^table\s*/i, "")]);
+  }
+  return { rows };
+}
+
+// Pack: title, then tables with their guests (table names are written once).
+function pack(title, rows) {
+  const by = new Map();
+  for (const [n, t] of rows) { if (!by.has(t)) by.set(t, []); by.get(t).push(n); }
+  const body = [title, ...[...by].map(([t, ns]) => t + "\t" + ns.join("\t"))].join("\n");
+  return LZString.compressToEncodedURIComponent(body);
+}
+
+function unpack(h) {
+  const s = LZString.decompressFromEncodedURIComponent(h);
+  if (!s) return null;
+  const [title, ...lines] = s.split("\n");
+  const guests = [];
+  for (const l of lines) { const [t, ...ns] = l.split("\t"); for (const n of ns) guests.push({ n, t, mates: ns.filter(x => x !== n) }); }
+  return { title, guests };
+}
+
+const fold = s => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+
+function make() {
+  const p = parse($("#list").value);
+  if (p.error) { $("#msg").innerHTML = `<span class="warn">${p.error}</span>`; return; }
+  if (!p.rows.length) { $("#msg").innerHTML = '<span class="warn">Paste at least one guest.</span>'; return; }
+  const title = $("#title").value.trim() || "Welcome";
+  const url = BASE + "#" + pack(title, p.rows);
+  let qr;
+  try { qr = qrcode(0, "L"); qr.addData(url); qr.make(); }
+  catch (e) { $("#msg").innerHTML = '<span class="warn">This list is too long for one QR code. Split it in two signs (for example by table numbers).</span>'; return; }
+  $("#qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+  $("#stitle").textContent = title;
+  $("#out").style.display = "block";
+  const tables = new Set(p.rows.map(r => r[1])).size;
+  $("#msg").textContent = `${p.rows.length} guests at ${tables} tables.`;
+  const dense = qr.getModuleCount();
+  $("#size").innerHTML = dense > 120 ? `<span class="warn">Long list: print this sign at least 15 cm (6 in) wide and test it with a phone.</span>` :
+    `Prints well at 10 cm (4 in) or more.`;
+  $("#open").onclick = () => window.open(url, "_blank", "noopener");
+  $("#copy").onclick = () => navigator.clipboard.writeText(url).then(() => { $("#copy").textContent = "✓ Copied"; });
+  $("#out").scrollIntoView({ behavior: "smooth" });
+}
+
+function finder(data) {
+  $("#make").style.display = "none";
+  $("#find").style.display = "block";
+  $("#ftitle").textContent = data.title;
+  document.title = data.title + " · find your seat";
+  const show = () => {
+    const q = fold($("#q").value.trim());
+    if (q.length < 2) { $("#res").innerHTML = ""; return; }
+    const hits = data.guests.filter(g => fold(g.n).split(/\s+/).some(w => w.startsWith(q)) || fold(g.n).includes(q)).slice(0, 8);
+    $("#res").innerHTML = hits.length ? hits.map(g =>
+      `<div class="hit"><div>${esc(g.n)}</div><div class="t">${/^\d+$/.test(g.t) ? "Table " + esc(g.t) : esc(g.t)}</div>` +
+      (g.mates.length ? `<div class="w">with ${esc(g.mates.slice(0, 9).join(", "))}${g.mates.length > 9 ? "…" : ""}</div>` : "") + "</div>").join("")
+      : '<p class="mut">No guest with that name. Try your other name, or ask at the entrance.</p>';
+  };
+  $("#q").addEventListener("input", show);
+}
+
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+$("#go").addEventListener("click", make);
+$("#demo").addEventListener("click", () => {
+  $("#title").value = "Ana & Marko · 12 June";
+  $("#list").value = "Ivana Horvat, 1\nLuka Kovač, 1\nPetra Babić, 1\nTomislav Novak, 2\nMarija Jurić, 2\nAunt Đurđa, Family table\nUncle Ivo, Family table";
+  make();
+});
+if (location.hash.length > 1) {
+  const d = unpack(location.hash.slice(1));
+  if (d) finder(d);
+}
+</script>
+</body>
+</html>
