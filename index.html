@@ -126,6 +126,7 @@ function make() {
 
 function finder(data) {
   $("#make").style.display = "none";
+  if ($(".faq")) $(".faq").style.display = "none";            // guests only need the search
   $("#find").style.display = "block";
   $("#ftitle").textContent = data.title;
   document.title = data.title + " · find your seat";
