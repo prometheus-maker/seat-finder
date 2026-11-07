@@ -2,6 +2,9 @@
 
 **https://prometheus-maker.github.io/seat-finder/**
 
+![Paste the guest list, get one QR code for the entrance](demo.gif)
+
+
 Paste your seating chart (name, table per line), print one QR code for the entrance. Guests scan it, type their
 name and see their table and who sits with them. No app, no sign-up, no server: the whole list is compressed into
 the QR code's link (tested: 180 guests fit in one code that phones read).
