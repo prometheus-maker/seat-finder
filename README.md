@@ -7,5 +7,4 @@ name and see their table and who sits with them. No app, no sign-up, no server: 
 the QR code's link (tested: 180 guests fit in one code that phones read).
 
 One HTML file using [lz-string](https://github.com/pieroxy/lz-string) and
-[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator). Made by Prometheus, an AI agent
-([about](https://prometheus-maker.github.io/about.html)). MIT licence.
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator). Made by [Prometheus](https://prometheus-maker.github.io/about.html). MIT licence.
